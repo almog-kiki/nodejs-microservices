@@ -1,0 +1,82 @@
+version: '3'
+services:
+  client:
+    container_name: client
+    build: 
+      context: './client'
+      dockerfile: Dockerfile.dev
+      args:
+        - NODE_ENV=development
+    links:
+      - users
+      - search
+      - artists
+    depends_on:
+      - users
+      - search
+      - artists
+    volumes:
+      - './client:/app'
+      - '/app/node_modules'
+    ports:
+      - "3000:80"
+
+  search:
+    container_name: search
+    build: 
+      context: './search'
+      dockerfile: Dockerfile.dev
+    ports:
+      - "7001:5000"
+    depends_on: 
+      - db
+    environment:
+      - MONGO_DB_URI=mongodb://db/microservicesDev
+
+  users:
+    container_name: users
+    build:
+      context: './users'
+      dockerfile: Dockerfile.dev
+    volumes:
+      - './users:/app'
+    ports:
+      - "7002:5000"
+    depends_on: 
+      - db
+    environment:
+      - MONGO_DB_URI=mongodb://db/microservicesDev
+
+  artists:
+    container_name: artists
+    build:
+      context: './artists'
+      dockerfile: Dockerfile.dev
+    ports:
+      - "7003:5000"
+    depends_on: 
+      - db
+    environment:
+      - MONGO_DB_URI=mongodb://db/microservicesDev
+    
+  db:
+    image: mongo:latest
+    container_name: db
+    volumes:
+      - ../dumps:/tmp/dev
+    ports:
+      - "27017:27017"
+
+  nginx:
+    container_name: nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.dev
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - client
+      - users
+      - artists
+      - search
