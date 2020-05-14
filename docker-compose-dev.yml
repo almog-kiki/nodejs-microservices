@@ -31,7 +31,7 @@ services:
     depends_on: 
       - db
     environment:
-      - MONGO_DB_URI=mongodb://db/microservicesDev
+      - MONGO_DB_URI=mongodb://db/microservices
 
   users:
     container_name: users
@@ -45,7 +45,7 @@ services:
     depends_on: 
       - db
     environment:
-      - MONGO_DB_URI=mongodb://db/microservicesDev
+      - MONGO_DB_URI=mongodb://db/microservices
 
   artists:
     container_name: artists
@@ -57,7 +57,7 @@ services:
     depends_on: 
       - db
     environment:
-      - MONGO_DB_URI=mongodb://db/microservicesDev
+      - MONGO_DB_URI=mongodb://db/microservices
     
   db:
     image: mongo:latest

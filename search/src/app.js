@@ -1,24 +1,34 @@
 const fetch = require("node-fetch");
 const express = require("express");
+const axios = require("axios")
 const app = express();
+
+const axiosUserService = axios.create({
+  baseURL:"http://users:5000"
+});
+const axiosArtistService = axios.create({
+  baseURL:"http://artists:5000"
+});
 
 app.get("/", (req, res) => {
   res.json({ msg: "search" });
 });
 
-let URL = "http://localhost"
-
-
 function searchValueInName(value, arr){
-  let result = [];
-  arr.forEach(element => {
-      let name = element.name.toLowerCase(); 
-      let isNameContaineValue = name.includes(value.toLowerCase());
-      if(isNameContaineValue){
-        result.push(element)
-      }
-  });
-  return result;
+  try{
+    let result = [];
+    arr.forEach(element => {
+        let name = element.name.toLowerCase(); 
+        let isNameContaineValue = name.includes(value.toLowerCase());
+        if(isNameContaineValue){
+          result.push(element)
+        }
+    });
+    return result;
+  } catch(error){
+      throw 'error: ' + error;
+  }
+ 
 }
 /**
   Calling other services from a service is dangerous.
@@ -29,19 +39,26 @@ function searchValueInName(value, arr){
 app.get("/api/v1/search", async (req, res) => {
   console.log("/api/v1/search")
 
-  const artistsPromise = fetch(URL + "/api/v1/artists");
-  const userPromise    = fetch(URL + "/api/v1/users");
-  const promises = [artistsPromise, userPromise];
-  const [artistResponse, userResponse] = await Promise.all(promises);
-  const artistJson = await artistResponse.json();
-  const userJson = await userResponse.json();
-  let value = req.query.value;
-  
-  const artistsResult =  searchValueInName(value, artistJson)
-  const usersResult = searchValueInName(value, userJson)
+  try{
 
-  const result = { artists: artistsResult, users: usersResult };
-  res.json(result);
+    const userPromise    = await axiosUserService.get("/api/v1/users");
+    const artistsPromise =  await axiosArtistService.get("/api/v1/artists");
+
+    Promise.all([userPromise, artistsPromise]).then(function(response) {
+      const users = response[0].data;
+      const artists = response[1].data;
+      let value = req.query.value;
+      const artistsResult = searchValueInName(value, artists)
+      const usersResult   = searchValueInName(value, users)
+      const result = { artists: artistsResult, users: usersResult };
+      res.json(result);
+    });
+
+  }catch(error) {
+    console.log(error.stack);
+    res.json({error: error});
+  }
+  
 
   
 });
